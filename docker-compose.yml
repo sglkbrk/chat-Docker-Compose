@@ -1,0 +1,42 @@
+version: '3.3'
+services:
+  mongodb_container:
+    image: mongo:latest
+    ports:
+      - 27018:27017
+    volumes:
+      - ./.docker/mongodb/mongod.conf:/etc/mongod.conf
+      - ./.docker/mongodb/initdb.d/:/docker-entrypoint-initdb.d/
+      - ./.docker/mongodb/data/db/:/data/db/
+      - ./.docker/mongodb/data/log/:/var/log/mongodb/
+    command: [--auth]
+  chat-service:
+    image: harbor.bsaglik.com/chat/chat-service
+    ports:
+      - 8080:8080
+    links:
+      - mongodb_container
+    depends_on:
+      - mongodb_container 
+  userauth-service:
+    image: harbor.bsaglik.com/chat/userauth-service
+    ports:
+      - 3000:3000
+    depends_on:
+      - mongodb_container 
+    links:
+      - mongodb_container
+  file-service:
+    image: harbor.bsaglik.com/chat/file-service
+    ports:
+      - 3001:3001
+    volumes:
+      - /data:/uploads
+      - /data:/home/uploads
+      - /uploads:/uploads
+      - /data:/data
+      - /home/data:/home/data
+  vue-client:
+    image: harbor.bsaglik.com/chat/vue-client
+    ports:
+      - 80:8080
